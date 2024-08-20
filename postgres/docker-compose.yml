@@ -1,6 +1,16 @@
 version: '3.8'
 
-services: 
+services:
+  app:
+    build: ./app/
+    ports:
+      - 8000:8000
+    volumes:
+      - ./app:/app
+    command: sh -c "uvicorn main:app --host 0.0.0.0 --reload"
+    depends_on:
+      - postgres
+
   postgres:
     image: postgres:16-alpine
     ports:
