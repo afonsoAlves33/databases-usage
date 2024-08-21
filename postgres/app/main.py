@@ -1,47 +1,57 @@
 from fastapi import FastAPI
 import psycopg
 
-DB_URL = "postgres://admin:admin@db:5432/main"
+DB_URL = "postgres://admin:admin@postgres:5432/main"
 
 
 app = FastAPI()
 
-
+def execute_sql_script(script: str, params: tuple = None):
+    try:
+        with psycopg.connect(DB_URL) as conn:
+            print(conn)
+            try: 
+                with conn.cursor() as cur:
+                    cur.execute(script, params)
+                    conn.commit()
+                    conn.close()
+                    return "Success"
+            except Exception as e:
+                print(e)
+                return "Could not execute the script: ", e
+    except Exception as e:
+        print(e)
+        return "Could not connect to the database: ", e
+    
 
 @app.get("/")
 def read_root():
     try:
-        with psycopg.connect("postgres://admin:admin@postgres:5432/main") as conn:
-            print(conn)
-            with conn.cursor() as cur:
-                cur.execute("""
-            CREATE TABLE IF NOT EXISTS pessoa (
-                id SERIAL PRIMARY KEY,
-                nome VARCHAR(100) NOT NULL,
-                email VARCHAR(255) UNIQUE NOT NULL,
-                idade INT CHECK (idade >= 0)
-            );
-            """)
-                conn.commit()
-                conn.close() 
+        create_table = execute_sql_script( """
+        CREATE TABLE IF NOT EXISTS person (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(100) NOT NULL,
+            email VARCHAR(255) UNIQUE NOT NULL,
+            age INT CHECK (age >= 0)
+        );
+        """)
+        print(create_table)
     except Exception as e:
         print(e)
-        return "Exceção: ", e
-    return {"Table Pessoa criada"}
+        return {"Exception": f"{e}"}
+    return {"Table Person created"}
 
-@app.post("/insert_person")
-async def add_person(name: str, email: str, age: int):
+@app.post("/insert_person/")
+def add_person(name: str, email: str, age: int):
     try:
-        with psycopg.connect("postgres://admin:admin@postgres:5432/main") as conn:
-            print(conn)
-            with conn.cursor() as cur:
-                cur.execute("""
-                    INSERT INTO pessoa(nome, email, idade)
-                    VALUES (%s, %s, %s);
-                """, (name, email, age))
-                conn.commit()
-                conn.close() 
-
+        insert = execute_sql_script("""
+            INSERT INTO person(name, email, age)
+            VALUES (%s, %s, %s);
+            """, (name, email, age))
+        print(insert)
+        if insert == "Sucess":
+            return {"Sucess"}
+        else: 
+            return {"Error": str(insert)}
     except Exception as e:
-        return {"Exceção": f"{e}"}
-    return {"Sucesso"}
+        return {"Exception": f"{e}"}
