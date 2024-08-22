@@ -12,13 +12,16 @@ services:
       - mongodb
 
   mongodb:
-    image: mongodb/mongodb-community-server:6.0.14-ubi8-20240821T091142Z
+    image: mongodb/mongodb-community-server:5.0.11-ubi8
     container_name: mongodb
     restart: unless-stopped
     environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: admin
+      MONGODB_INITDB_ROOT_USERNAME: admin
+      MONGODB_INITDB_ROOT_PASSWORD: admin
     ports:
       - 27017:27017
     volumes:
-      - ./database-data:/data/db
+      - data_db:/data/db
+
+volumes:
+  data_db:
